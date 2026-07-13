@@ -1,0 +1,10 @@
+File,AudioName,Locale
+Rx..en_US..goodbye.mp3,Rx__goodbye,DEFAULT
+Rx..es_ES..goodbye.mp3,Rx__goodbye,es_419
+Rx..ru_RU..goodbye.mp3,Rx__goodbye,de_DE
+Rx..en_US..great.mp3,Rx__great,DEFAULT
+Rx..es_ES..great.mp3,Rx__great,es_419
+Rx..ru_RU..great.mp3,Rx__great,de_DE
+Rx..en_US..MainMenu_ASR_DTMF.mp3,Rx__MainMenu_ASR_DTMF,DEFAULT
+Rx..es_ES..MainMenu_ASR_DTMF.mp3,Rx__MainMenu_ASR_DTMF,es_419
+Rx..ru_RU..MainMenu_ASR_DTMF.mp3,Rx__MainMenu_ASR_DTMF,de_DE
