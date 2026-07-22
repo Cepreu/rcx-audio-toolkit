@@ -1,11 +1,16 @@
 param (
-    [Parameter(Mandatory)][string]$WorkingDirectory,
-    [Parameter(Mandatory)][string]$CsvFile,
-    [Parameter(Mandatory)][string]$Account,
+    [string]$WorkingDirectory,
+    [string]$CsvFile,
+    [string]$Account,
     [switch]$AutoToken
 )
 
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+
+if (-not $WorkingDirectory -or -not $CsvFile -or -not $Account) {
+    Write-Host "Usage: .\rcx-audio.ps1 upload <working_directory> <csv_file> <account> [-AutoToken]" -ForegroundColor Red
+    exit 1
+}
 
 # Load .env if present
 $EnvFile = Join-Path $ScriptDir "..\..\\.env"
@@ -21,21 +26,21 @@ if (Test-Path $EnvFile) {
 
 function Refresh-Token {
     if ($AutoToken) {
-        Write-Host "🔄 Token expired — refreshing via get_token.ps1..." -ForegroundColor Yellow
+        Write-Host "Token expired - refreshing via get_token.ps1..." -ForegroundColor Yellow
         $script:Token = & "$ScriptDir\get_token.ps1"
         if (-not $script:Token) {
-            Write-Error "❌ Failed to refresh token, exiting"
+            Write-Error "Failed to refresh token, exiting"
             exit 1
         }
-        Write-Host "✅ Token refreshed" -ForegroundColor Green
+        Write-Host "Token refreshed" -ForegroundColor Green
     } else {
-        Write-Host "⚠️  Token expired. Re-enter Bearer token:" -ForegroundColor Yellow
-        $SecureToken = Read-Host "🔑 Enter Bearer token" -AsSecureString
+        Write-Host "Token expired. Re-enter Bearer token:" -ForegroundColor Yellow
+        $SecureToken = Read-Host "Enter Bearer token" -AsSecureString
         $script:Token = [Runtime.InteropServices.Marshal]::PtrToStringAuto(
             [Runtime.InteropServices.Marshal]::SecureStringToBSTR($SecureToken)
         )
         if (-not $script:Token) {
-            Write-Error "❌ No token entered, exiting"
+            Write-Error "No token entered, exiting"
             exit 1
         }
     }
@@ -43,25 +48,25 @@ function Refresh-Token {
 
 # Initial token fetch
 if ($AutoToken) {
-    Write-Host "🔑 Fetching token via get_token.ps1..."
+    Write-Host "Fetching token via get_token.ps1..."
     $Token = & "$ScriptDir\get_token.ps1"
     if (-not $Token) {
-        Write-Error "❌ Failed to get token, exiting"
+        Write-Error "Failed to get token, exiting"
         exit 1
     }
 } else {
-    $SecureToken = Read-Host "🔑 Enter Bearer token" -AsSecureString
+    $SecureToken = Read-Host "Enter Bearer token" -AsSecureString
     $Token = [Runtime.InteropServices.Marshal]::PtrToStringAuto(
         [Runtime.InteropServices.Marshal]::SecureStringToBSTR($SecureToken)
     )
     if (-not $Token) {
-        Write-Error "❌ No token entered, exiting"
+        Write-Error "No token entered, exiting"
         exit 1
     }
 }
 
 # Validate token before starting batch (suppresses spurious first-run failures)
-Write-Host "🔍 Validating token..."
+Write-Host "Validating token..."
 try {
     $null = Invoke-RestMethod `
         -Method Get `
@@ -70,7 +75,7 @@ try {
 } catch {
     $ValidationCode = $_.Exception.Response.StatusCode.value__
     if ($ValidationCode -eq 401 -or -not $ValidationCode) {
-        Write-Host "⚠️  Token invalid after fetch — refreshing before starting batch..." -ForegroundColor Yellow
+        Write-Host "Token invalid after fetch - refreshing before starting batch..." -ForegroundColor Yellow
         Refresh-Token
     }
 }
@@ -115,7 +120,7 @@ function Invoke-Upload {
     try {
         $null = Invoke-RestMethod `
             -Method Post `
-            -Uri $BaseUrl `
+            -Uri "https://ringcx.ringcentral.com/cx/admin/v1/accounts/~/sub-accounts/$Account/accountaudio" `
             -Headers @{
                 Authorization = "Bearer $script:Token"
                 Accept        = "application/json"
@@ -132,7 +137,6 @@ function Invoke-Upload {
 
 # ── Upload loop ───────────────────────────────────────────────────────────────
 
-$BaseUrl     = "https://ringcx.ringcentral.com/cx/admin/v1/accounts/~/sub-accounts/$Account/accountaudio"
 $FirstUpload = $true
 
 Import-Csv -Path $CsvFile | ForEach-Object {
@@ -142,7 +146,7 @@ Import-Csv -Path $CsvFile | ForEach-Object {
     $FilePath  = Join-Path $WorkingDirectory $File
 
     if (-not (Test-Path $FilePath)) {
-        Write-Host "❌ $AudioName ($Locale) — file not found: $FilePath" -ForegroundColor Red
+        Write-Host "❌ $AudioName ($Locale) - file not found: $FilePath" -ForegroundColor Red
         return
     }
 
@@ -150,22 +154,21 @@ Import-Csv -Path $CsvFile | ForEach-Object {
 
     # On 401 or 0 (connection failure), refresh token once and retry
     if ($StatusCode -eq 401 -or $StatusCode -eq 0) {
-        Write-Host "⚠️  $AudioName ($Locale) — $StatusCode received, refreshing token and retrying..." -ForegroundColor Yellow
+        Write-Host "⚠️  $AudioName ($Locale) - $StatusCode received, refreshing token and retrying..." -ForegroundColor Yellow
         Refresh-Token
         $StatusCode = Invoke-Upload -FilePath $FilePath -AudioName $AudioName -Locale $Locale -File $File
     }
 
     if ($StatusCode -eq 201) {
-        Write-Host "✅ $AudioName ($Locale) — uploaded" -ForegroundColor Green
+        Write-Host "✅ $AudioName ($Locale) - uploaded" -ForegroundColor Green
         # TEST ONLY: sleep 6 minutes after first upload to trigger token expiry
- #       if ($FirstUpload) {
- #           $FirstUpload = $false
- #           Write-Host "⏳ [TEST] Sleeping 6 minutes to trigger token expiry..." -ForegroundColor Cyan
- #           Start-Sleep -Seconds 360
- #           Write-Host "⏰ [TEST] Sleep done, continuing batch..." -ForegroundColor Cyan
- #       }
+        if ($FirstUpload) {
+            $FirstUpload = $false
+            Write-Host "⏳ [TEST] Sleeping 6 minutes to trigger token expiry..." -ForegroundColor Cyan
+            Start-Sleep -Seconds 360
+            Write-Host "⏰ [TEST] Sleep done, continuing batch..." -ForegroundColor Cyan
+        }
     } else {
-        Write-Host "❌ $AudioName ($Locale) — failed ($StatusCode)" -ForegroundColor Red
+        Write-Host "❌ $AudioName ($Locale) - failed ($StatusCode)" -ForegroundColor Red
     }
 }
-
