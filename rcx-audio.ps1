@@ -20,7 +20,7 @@ function Show-Usage {
 }
 
 if (-not $Command) {
-    Write-Host "Error: No command specified." -ForegroundColor Red
+    Write-Host "[ERROR] No command specified." -ForegroundColor Red
     Show-Usage
 }
 
@@ -31,7 +31,7 @@ switch ($Command) {
         $PositionalArgs   = $RestArgs | Where-Object { $_ -ne "-AutoToken" }
 
         if ($PositionalArgs.Count -lt 3) {
-            Write-Host "Error: 'upload' requires <working_directory> <csv_file> <account>." -ForegroundColor Red
+            Write-Host "[ERROR] 'upload' requires <working_directory> <csv_file> <account>." -ForegroundColor Red
             Show-Usage
         }
 
@@ -46,7 +46,7 @@ switch ($Command) {
         }
     }
     default {
-        Write-Host "Error: Unknown command '$Command'." -ForegroundColor Red
+        Write-Host "[ERROR] Unknown command '$Command'." -ForegroundColor Red
         Show-Usage
     }
 }
