@@ -12,6 +12,10 @@ if (-not $WorkingDirectory -or -not $CsvFile -or -not $Account) {
     exit 1
 }
 
+# Resolve relative paths against the caller's working directory
+$WorkingDirectory = [System.IO.Path]::GetFullPath($WorkingDirectory, $PWD.Path)
+$CsvFile          = [System.IO.Path]::GetFullPath($CsvFile, $PWD.Path)
+
 # Load .env if present
 $EnvFile = Join-Path $ScriptDir "..\..\\.env"
 if (Test-Path $EnvFile) {
