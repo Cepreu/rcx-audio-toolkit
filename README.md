@@ -23,6 +23,31 @@ rcx-audio-toolkit/
 
 ---
 
+## Quick Start
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/Cepreu/rcx-audio-toolkit.git
+cd rcx-audio-toolkit
+```
+
+### 2. Install Bun (if not already installed)
+
+Install Bun from [bun.sh](https://bun.sh):
+
+```bash
+curl -fsSL https://bun.sh/install | bash
+```
+
+### 3. Install project dependencies
+
+```bash
+bun install
+```
+
+---
+
 ## Supported Commands
 
 | Command | Description |
@@ -35,15 +60,9 @@ More commands (e.g. `delete`, `list`) can be added in future.
 
 ## Setup
 
-### 1. Install Bun
+Before running commands, complete the Quick Start section above, then follow these steps:
 
-Install Bun from [bun.sh](https://bun.sh), then verify it is available:
-
-```bash
-bun --version
-```
-
-### 2. Prepare the CSV file
+### 1. Prepare the CSV file
 
 Create a `files.csv` in the root directory:
 
@@ -60,13 +79,13 @@ welcome_es_419.wav,welcome,es_419
 | `AudioName` | Name to register the audio as in RingCX |
 | `Locale` | Language/locale code (e.g. `es_419`, `en_US`) |
 
-### 4. Place audio files
+### 2. Place audio files
 
 Put all `.wav` files in a single directory, e.g.:
 - macOS/Linux: `/Users/sergei/audio`
 - Windows: `C:\audio`
 
-### 5. (Optional) Create `.env` for automatic token fetching
+### 3. (Optional) Create `.env` for automatic token fetching
 
 > Only needed if you plan to use `--auto-token` / `-AutoToken`.
 > If you prefer to copy-paste a token from the browser or Postman, skip this step.
@@ -116,7 +135,7 @@ You will be prompted:
 
 ### upload — Auto token (requires `.env`)
 
-Fetches a fresh RingCX token automatically — useful for frequent runs. Requires `.env` or environment variables to be set (see Setup step 4).
+Fetches a fresh RingCX token automatically — useful for frequent runs. Requires `.env` or environment variables to be set (see Setup step 3).
 
 **Direct Bun:**
 ```bash
