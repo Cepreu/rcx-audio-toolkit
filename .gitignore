@@ -1,1 +1,27 @@
+# Environment & Credentials
 .env
+.env.local
+.env.*.local
+
+# Bun & Node
+node_modules/
+bun.lockb
+*.tsbuildinfo
+
+# Build output
+dist/
+build/
+out/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+

@@ -8,17 +8,17 @@ A cross-platform toolkit for bulk management of RingCX audio prompts via the Rin
 
 ```
 rcx-audio-toolkit/
-├── rcx-audio.sh           # Entry point — macOS / Linux
-├── rcx-audio.ps1          # Entry point — Windows
+├── package.json            # Bun project configuration
+├── tsconfig.json           # TypeScript configuration
+├── rcx-audio.sh           # Optional — macOS / Linux compatibility launcher
 ├── .env                   # Optional — credentials for auto-token mode
 ├── files.csv              # List of files to upload
 └── src/
-    ├── mac/
-    │   ├── upload.sh
-    │   └── get_token.sh
-    └── windows/
-        ├── upload.ps1
-        └── get_token.ps1
+    ├── index.ts           # CLI entry point (argument parsing)
+    ├── auth.ts            # Authorization module (token exchange)
+    ├── upload.ts          # Upload command implementation
+    ├── utils.ts           # Shared utilities (env, CSV, file I/O)
+    └── types.ts           # Shared TypeScript types
 ```
 
 ---
@@ -35,21 +35,15 @@ More commands (e.g. `delete`, `list`) can be added in future.
 
 ## Setup
 
-### 1. Make scripts executable (macOS / Linux only)
+### 1. Install Bun
+
+Install Bun from [bun.sh](https://bun.sh), then verify it is available:
 
 ```bash
-chmod +x rcx-audio.sh src/mac/upload.sh src/mac/get_token.sh
+bun --version
 ```
 
-### 2. Allow script execution (Windows only)
-
-Run once in PowerShell as Administrator:
-
-```powershell
-Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
-```
-
-### 3. Prepare the CSV file
+### 2. Prepare the CSV file
 
 Create a `files.csv` in the root directory:
 
@@ -85,25 +79,14 @@ RINGCENTRAL_CLIENT_SECRET=your_client_secret
 RINGCENTRAL_JWT=your_jwt_assertion
 ```
 
-> ⚠️ Never commit `.env` to git. Add it to `.gitignore`:
-> ```bash
-> echo ".env" >> .gitignore
-> ```
+> ⚠️ Never commit `.env` to git. It is already in `.gitignore`.
 
-Alternatively, set variables in your terminal session without a file:
+Alternatively, set variables in your terminal session:
 
-**macOS / Linux:**
 ```bash
 export RINGCENTRAL_CLIENT_ID=your_client_id
 export RINGCENTRAL_CLIENT_SECRET=your_client_secret
 export RINGCENTRAL_JWT=your_jwt_assertion
-```
-
-**Windows:**
-```powershell
-$env:RINGCENTRAL_CLIENT_ID="your_client_id"
-$env:RINGCENTRAL_CLIENT_SECRET="your_client_secret"
-$env:RINGCENTRAL_JWT="your_jwt_assertion"
 ```
 
 ---
@@ -112,16 +95,16 @@ $env:RINGCENTRAL_JWT="your_jwt_assertion"
 
 ### upload — Manual token entry (no setup required)
 
-The simplest way to run — copy a Bearer token from your browser (DevTools → Network tab) or Postman and paste it when prompted. Input is hidden while typing.
+The simplest way to run — copy a Bearer token from your browser (DevTools → Network tab) or Postman and paste it when prompted.
 
-**macOS / Linux:**
+**Direct Bun:**
 ```bash
-./rcx-audio.sh upload /Users/sergei/audio files.csv 2114002
+bun src/index.ts upload /Users/sergei/audio files.csv 2114002
 ```
 
-**Windows:**
-```powershell
-.\rcx-audio.ps1 upload C:\audio files.csv 2114002
+**Optional — via shell launcher (macOS / Linux):**
+```bash
+./rcx-audio.sh upload /Users/sergei/audio files.csv 2114002
 ```
 
 You will be prompted:
@@ -133,16 +116,16 @@ You will be prompted:
 
 ### upload — Auto token (requires `.env`)
 
-Fetches a fresh RingCX token automatically — useful for frequent runs. Requires `.env` or environment variables to be set (see Setup step 5).
+Fetches a fresh RingCX token automatically — useful for frequent runs. Requires `.env` or environment variables to be set (see Setup step 4).
 
-**macOS / Linux:**
+**Direct Bun:**
 ```bash
-./rcx-audio.sh upload /Users/sergei/audio files.csv 2114002 --auto-token
+bun src/index.ts upload /Users/sergei/audio files.csv 2114002 --auto-token
 ```
 
-**Windows:**
-```powershell
-.\rcx-audio.ps1 upload C:\audio files.csv 2114002 -AutoToken
+**Optional — via shell launcher (macOS / Linux):**
+```bash
+./rcx-audio.sh upload /Users/sergei/audio files.csv 2114002 --auto-token
 ```
 
 ---
@@ -150,7 +133,7 @@ Fetches a fresh RingCX token automatically — useful for frequent runs. Require
 ## Expected Output
 
 ```
-🔑 Fetching token via get_token.sh...
+� Validating token...
 ✅ RingCentral token received
 ✅ RingCX token received
 ✅ hold_time_10 (es_419) — uploaded
@@ -179,7 +162,7 @@ Get-ChildItem *_es_MX.wav | Rename-Item -NewName { $_.Name -replace '_es_MX\.wav
 sed -i 's/\r//' files.csv
 ```
 
-**Token expiry** — tokens expire after 1 hour. For large batches, use `--auto-token` / `-AutoToken` to ensure a fresh token is fetched at the start of every run.
+**Token expiry** — tokens expire after 1 hour. For large batches, use `--auto-token` to ensure a fresh token is fetched at the start of every run.
 
 ---
 
@@ -189,8 +172,7 @@ sed -i 's/\r//' files.csv
 |-------|-------------|-----|
 | `Failed to get RingCentral token` | Wrong credentials or expired JWT | Check `.env` values; regenerate JWT from RingCentral Developer Console |
 | `Failed to get RingCX token` | Account lacks RingCX access | Verify sub-account has RingCX provisioned |
-| `401 Unauthorized` | Token expired | Re-run with `--auto-token` / `-AutoToken` or paste a fresh token |
+| `401 Unauthorized` | Token expired | Re-run with `--auto-token` or paste a fresh token |
 | `404 Not Found` | Wrong account ID | Verify the sub-account ID parameter |
 | `400 Bad Request` | Filename mismatch or missing file | Check CSV filenames match files in the working directory exactly (case-sensitive on Mac/Linux) |
 | Token prints as `null` | JWT expired | Generate a new JWT from RingCentral Developer Console |
-| `running scripts is disabled` (Windows) | Execution policy blocked | Run `Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned` |
