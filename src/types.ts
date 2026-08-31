@@ -3,3 +3,21 @@ export type AudioRow = {
   audioName: string;
   locale: string;
 };
+
+export {
+  Channel,
+  digitalChannels,
+  supportedLanguages,
+} from "./Prompt/prompt-types";
+
+export type {
+  ChannelPrompts,
+  DigitalChannelPrompts,
+  DigitalPrompt,
+  FileVoicePrompt,
+  Prompt,
+  SupportedLanguage,
+  TtsVoicePrompt,
+  VoiceChannelPrompts,
+  VoicePrompt,
+} from "./Prompt/prompt-types";

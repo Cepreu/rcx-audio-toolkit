@@ -4,7 +4,9 @@
   "type": "module",
   "scripts": {
     "start": "bun run src/index.ts",
-    "upload": "bun src/index.ts upload"
+    "upload": "bun src/index.ts upload",
+    "translate": "bun src/index.ts translate",
+    "tts": "bun src/index.ts tts"
   },
   "devDependencies": {
     "@types/node": "^26.2.0",

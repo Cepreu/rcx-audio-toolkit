@@ -1,0 +1,5 @@
+PromptName,Channel,Text
+Welcome Prompt,voice,Welcome to our support ${system.dnis} line.
+Social Greeting,x-twitter,"Thanks for contacting us on X, we will reply in ${variable} days."
+Email Greeting,email,Thank you for contacting our support team.
+Chat Greeting,webpage-chat,How can we help you today?

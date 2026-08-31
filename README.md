@@ -13,12 +13,21 @@ rcx-audio-toolkit/
 ├── rcx-audio.sh           # Optional — macOS / Linux compatibility launcher
 ├── .env                   # Optional — credentials for auto-token mode
 ├── files.csv              # List of files to upload
+├── test/
+│   ├── translation_input.csv
+│   └── tts_input.csv
 └── src/
     ├── index.ts           # CLI entry point (argument parsing)
     ├── auth.ts            # Authorization module (token exchange)
     ├── upload.ts          # Upload command implementation
+    ├── translation.ts     # Generic translation orchestration
+    ├── azure-translation.ts # Azure Translator provider
+    ├── azure-tts.ts       # Azure TTS provider
+    ├── tts.ts             # TTS generation and upload CSV creation
     ├── utils.ts           # Shared utilities (env, CSV, file I/O)
-    └── types.ts           # Shared TypeScript types
+    ├── types.ts           # Shared TypeScript types
+    └── Prompt/
+        └── prompt-types.ts # Language, channel, and prompt model definitions
 ```
 
 ---
@@ -53,6 +62,8 @@ bun install
 | Command | Description |
 |---------|-------------|
 | `upload` | Bulk upload audio files from a CSV list |
+| `translate` | Translate text into all or selected supported languages |
+| `tts` | Generate MP3 files from prompt text using Azure TTS |
 
 More commands (e.g. `delete`, `list`) can be added in future.
 
@@ -98,6 +109,8 @@ RINGCENTRAL_CLIENT_SECRET=your_client_secret
 RINGCENTRAL_JWT=your_jwt_assertion
 ```
 
+See the [RingCentral documentation on creating a personal JWT credential](https://developers.ringcentral.com/guide/getting-started/create-credential).
+
 > ⚠️ Never commit `.env` to git. It is already in `.gitignore`.
 
 Alternatively, set variables in your terminal session:
@@ -107,6 +120,28 @@ export RINGCENTRAL_CLIENT_ID=your_client_id
 export RINGCENTRAL_CLIENT_SECRET=your_client_secret
 export RINGCENTRAL_JWT=your_jwt_assertion
 ```
+
+### 4. Configure Azure Translator
+
+Set the Azure Translator key and region in `.env` or your terminal session:
+
+```
+AZURE_TRANSLATOR_KEY=your_translator_key
+AZURE_TRANSLATOR_REGION=your_resource_region
+```
+
+You may also set `AZURE_TRANSLATOR_ENDPOINT` when using a custom Azure endpoint. The default is `https://api.cognitive.microsofttranslator.com`.
+
+### 5. Configure Azure TTS
+
+For TTS generation, set either the dedicated TTS credentials or reuse the Translator values:
+
+```
+AZURE_TTS_KEY=your_tts_key
+AZURE_TTS_REGION=your_tts_region
+```
+
+If `AZURE_TTS_KEY` / `AZURE_TTS_REGION` are not set, the project falls back to `AZURE_TRANSLATOR_KEY` / `AZURE_TRANSLATOR_REGION`.
 
 ---
 
@@ -145,6 +180,76 @@ bun src/index.ts upload /Users/sergei/audio files.csv 2114002 --auto-token
 **Optional — via shell launcher (macOS / Linux):**
 ```bash
 ./rcx-audio.sh upload /Users/sergei/audio files.csv 2114002 --auto-token
+```
+
+### translate — Translate prompt text
+
+The input CSV must contain `PromptName`, `Channel`, and `Text` columns. `Channel` must be one of the supported channel values, such as `voice`, `email`, or `webpage-chat`. Text containing commas or line breaks may be quoted using standard CSV quoting.
+
+```csv
+PromptName,Channel,Text
+Welcome,voice,Welcome to our support line.
+Goodbye,email,"Thank you for contacting us, and have a great day."
+```
+
+Run the translation command:
+
+```bash
+bun src/index.ts translate prompts.csv translated-prompts.csv
+```
+
+By default, the command translates into every supported language. To select specific language codes, provide a comma-separated list with `--languages`:
+
+```bash
+bun src/index.ts translate prompts.csv translated-prompts.csv --languages es-ES,fr-FR,ja-JP
+```
+
+Both hyphenated and underscored codes are accepted, for example `ko-KR` or `ko_KR`.
+
+The output file uses the following contract:
+
+```csv
+PromptName,Channel,LanguageCode,PromptText
+Welcome,voice,en-US,Welcome to our support line.
+Goodbye,email,fr-FR,Merci pour votre demande.
+```
+
+This output is intentionally compatible with the TTS input flow for voice rows. Non-voice rows remain in the translation result for review and other channel-specific workflows, but the TTS command ignores them.
+
+### tts — Generate MP3 prompts from Azure TTS
+
+The TTS command reads a CSV with prompt text, language, and optional voice information and creates MP3 files in the output directory. It also generates an upload CSV in the same folder.
+
+Input CSV format:
+
+```csv
+PromptName,Channel,PromptText,LanguageCode,Voice
+Welcome,voice,Welcome to our support line.,en-US,
+Goodbye,voice,Merci pour votre demande.,fr-FR,
+```
+
+Notes:
+- `PromptName` is used as the prompt name in the RingCX upload CSV.
+- `Channel` is expected to be `voice`; non-voice rows are ignored by the TTS flow.
+- `LanguageCode` accepts locale codes such as `en-US`, `fr-FR`, or `ko_KR`.
+- `Voice` is optional. If omitted, the toolkit uses the default Azure TTS voice for that language.
+
+Run the command:
+
+```bash
+bun src/index.ts tts prompts.csv output_directory
+```
+
+The command produces:
+- one MP3 per row in the target directory
+- `upload_prompts.csv` in the same directory for the RingCX upload command
+
+Example generated upload CSV:
+
+```csv
+File,AudioName,Locale
+Welcome-en-US.mp3,Welcome,en-US
+Goodbye-fr-FR.mp3,Goodbye,fr-FR
 ```
 
 ---

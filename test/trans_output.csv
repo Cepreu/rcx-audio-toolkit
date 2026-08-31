@@ -1,0 +1,9 @@
+PromptName,Channel,LanguageCode,PromptText
+Welcome Prompt,voice,fr-FR,Bienvenue dans notre ligne de soutien ${system.dnis}.
+Welcome Prompt,voice,en-US,Welcome to our support ${system.dnis} line.
+Social Greeting,x-twitter,fr-FR,"Merci de nous avoir contactés sur X, nous répondrons dans ${variable} jours."
+Social Greeting,x-twitter,en-US,"Thanks for contacting us on X, we will reply in ${variable} days."
+Email Greeting,email,fr-FR,Merci d’avoir contacté notre équipe d’assistance.
+Email Greeting,email,en-US,Thank you for contacting our support team.
+Chat Greeting,webpage-chat,fr-FR,Comment pouvons-nous vous aider aujourd’hui ?
+Chat Greeting,webpage-chat,en-US,How can we help you today?

@@ -1,0 +1,43 @@
+name: Welcome Prompt
+description: Welcome message for customers across supported channels.
+channels:
+  - channel: voice
+    prompts:
+      - language:
+          language: English (U.S.)
+          localeCode: en-US
+        text: Welcome to our support line.
+        type: TTS
+      - language:
+          language: Spanish (Latin America)
+          localeCode: es-419
+        text: Bienvenido a nuestra linea de soporte.
+        type: File
+        fileName: welcome_es_419.wav
+
+  - channel: x-twitter
+    prompts:
+      - language:
+          language: English (U.S.)
+          localeCode: en-US
+        text: Thanks for contacting us on X.
+        attributes:
+          maxLength: "280"
+
+  - channel: email
+    prompts:
+      - language:
+          language: English (U.K.)
+          localeCode: en-GB
+        text: Thank you for contacting our support team.
+        attributes:
+          subject: Support request received
+
+  - channel: webpage-chat
+    prompts:
+      - language:
+          language: French
+          localeCode: fr-FR
+        text: Bonjour, comment pouvons-nous vous aider ?
+        attributes:
+          responseFormat: plain-text
