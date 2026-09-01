@@ -71,13 +71,15 @@ More commands (e.g. `delete`, `list`) can be added in future.
 
 ## Setup
 
-Before running commands, complete the Quick Start section above, then follow these steps:
+Before running any command, complete the Quick Start section above. Then follow the setup steps for the command you want to use.
 
-### 1. Prepare the CSV file
+### Upload setup
 
-Create a `files.csv` in the root directory:
+Use this setup for the `upload` command.
 
-```
+1. Prepare the RingCX upload CSV.
+
+```csv
 File,AudioName,Locale
 hold_time_10_es_419.wav,hold_time_10,es_419
 hold_time_20_es_419.wav,hold_time_20,es_419
@@ -87,33 +89,24 @@ welcome_es_419.wav,welcome,es_419
 | Column | Description |
 |--------|-------------|
 | `File` | Filename only — path is provided separately as a parameter |
-| `AudioName` | Name to register the audio as in RingCX |
-| `Locale` | Language/locale code (e.g. `es_419`, `en_US`) |
+| `AudioName` | Label to register in RingCX |
+| `Locale` | Language/locale code such as `es_419` or `en_US` |
 
-### 2. Place audio files
-
-Put all `.wav` files in a single directory, e.g.:
+2. Place the audio files in a single folder, for example:
 - macOS/Linux: `/Users/sergei/audio`
 - Windows: `C:\audio`
 
-### 3. (Optional) Create `.env` for automatic token fetching
+3. Configure RingCentral credentials if you want to use `--auto-token`.
 
-> Only needed if you plan to use `--auto-token` / `-AutoToken`.
-> If you prefer to copy-paste a token from the browser or Postman, skip this step.
+Create a `.env` file in the project root:
 
-Create a `.env` file in the root directory:
-
-```
+```env
 RINGCENTRAL_CLIENT_ID=your_client_id
 RINGCENTRAL_CLIENT_SECRET=your_client_secret
 RINGCENTRAL_JWT=your_jwt_assertion
 ```
 
-See the [RingCentral documentation on creating a personal JWT credential](https://developers.ringcentral.com/guide/getting-started/create-credential).
-
-> ⚠️ Never commit `.env` to git. It is already in `.gitignore`.
-
-Alternatively, set variables in your terminal session:
+Or set them in the terminal:
 
 ```bash
 export RINGCENTRAL_CLIENT_ID=your_client_id
@@ -121,27 +114,105 @@ export RINGCENTRAL_CLIENT_SECRET=your_client_secret
 export RINGCENTRAL_JWT=your_jwt_assertion
 ```
 
-### 4. Configure Azure Translator
+> ⚠️ Never commit `.env` to git. It is already ignored.
 
-Set the Azure Translator key and region in `.env` or your terminal session:
+4. Choose how you will authenticate:
+- Paste a RingCX Bearer token manually when prompted
+- Or run with `--auto-token` after setting the `.env` values
 
+---
+
+### Translate setup
+
+Use this setup for the `translate` command.
+
+1. Prepare your input CSV with prompt text.
+
+```csv
+PromptName,Channel,Text
+Welcome,voice,Welcome to our support line.
+Goodbye,email,"Thank you for contacting us, and have a great day."
 ```
+
+Required columns:
+- `PromptName`: unique prompt identifier
+- `Channel`: channel type such as `voice`, `email`, `webpage-chat`
+- `Text`: source text to translate
+
+2. Configure Azure Translator credentials.
+
+```env
 AZURE_TRANSLATOR_KEY=your_translator_key
 AZURE_TRANSLATOR_REGION=your_resource_region
 ```
 
-You may also set `AZURE_TRANSLATOR_ENDPOINT` when using a custom Azure endpoint. The default is `https://api.cognitive.microsofttranslator.com`.
+Optional:
 
-### 5. Configure Azure TTS
-
-For TTS generation, set either the dedicated TTS credentials or reuse the Translator values:
-
+```env
+AZURE_TRANSLATOR_ENDPOINT=https://api.cognitive.microsofttranslator.com
 ```
+
+3. Run the translation command.
+
+```bash
+bun src/index.ts translate prompts.csv translated-prompts.csv
+```
+
+You can restrict the output to specific locales:
+
+```bash
+bun src/index.ts translate prompts.csv translated-prompts.csv --languages es-ES,fr-FR,ja-JP
+```
+
+> The output format is `PromptName,Channel,LanguageCode,PromptText`.
+
+---
+
+### TTS setup
+
+Use this setup for the `tts` command.
+
+1. Prepare an input CSV for text-to-speech.
+
+```csv
+PromptName,Channel,PromptText,LanguageCode,Voice
+Welcome,voice,Welcome to our support line.,en-US,
+Goodbye,voice,Merci pour votre demande.,fr-FR,
+```
+
+Required columns:
+- `PromptName`: prompt name used in the generated upload CSV
+- `Channel`: expected to be `voice`
+- `PromptText`: text or SSML to synthesize
+- `LanguageCode`: locale such as `en-US`, `fr-FR`, or `ko_KR`
+- `Voice`: optional custom Azure voice name
+
+2. Configure Azure TTS credentials.
+
+```env
 AZURE_TTS_KEY=your_tts_key
 AZURE_TTS_REGION=your_tts_region
 ```
 
-If `AZURE_TTS_KEY` / `AZURE_TTS_REGION` are not set, the project falls back to `AZURE_TRANSLATOR_KEY` / `AZURE_TRANSLATOR_REGION`.
+If these are not set, the project falls back to:
+
+```env
+AZURE_TRANSLATOR_KEY=your_translator_key
+AZURE_TRANSLATOR_REGION=your_resource_region
+```
+
+3. Create a target output directory and run the command.
+
+```bash
+mkdir -p output
+bun src/index.ts tts prompts.csv output
+```
+
+The command produces:
+- one MP3 file per prompt
+- `upload_prompts.csv` in the output folder for RingCX upload
+
+> Non-voice rows are ignored during TTS generation, but they can remain in the translated output for review.
 
 ---
 
