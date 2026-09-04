@@ -1,4 +1,4 @@
-import { type SupportedLanguage } from "./Prompt/prompt-types";
+import { type SupportedLanguage } from "./types";
 
 const defaultTranslatorEndpoint = "https://api.cognitive.microsofttranslator.com";
 

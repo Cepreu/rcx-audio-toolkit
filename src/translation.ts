@@ -1,4 +1,4 @@
-import { Channel, supportedLanguages, type SupportedLanguage } from "./Prompt/prompt-types";
+import { Channel, supportedLanguages, type SupportedLanguage } from "./types";
 import { azureLocale, translateText } from "./azure-translation";
 import { requireText } from "./utils";
 

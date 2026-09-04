@@ -1,4 +1,4 @@
-import { getDefaultAzureTtsVoice } from "./Prompt/prompt-types";
+import { getDefaultAzureTtsVoice } from "./types";
 
 const defaultTtsEndpoint = "https://{region}.tts.speech.microsoft.com/cognitiveservices/v1";
 

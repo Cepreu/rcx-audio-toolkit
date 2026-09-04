@@ -25,9 +25,7 @@ rcx-audio-toolkit/
     ├── azure-tts.ts       # Azure TTS provider
     ├── tts.ts             # TTS generation and upload CSV creation
     ├── utils.ts           # Shared utilities (env, CSV, file I/O)
-    ├── types.ts           # Shared TypeScript types
-    └── Prompt/
-        └── prompt-types.ts # Language, channel, and prompt model definitions
+    └── types.ts           # Shared TypeScript types and language/TTS definitions
 ```
 
 ---
@@ -340,24 +338,12 @@ Goodbye-fr-FR.mp3,Goodbye,fr-FR
 
 ## Tips
 
-**Renaming files from one locale to another** (e.g. `es_MX` → `es_419`):
-
-macOS / Linux:
-```bash
-for f in *_es_MX.wav; do mv "$f" "${f/_es_MX.wav/_es_419.wav}"; done
-```
-
-Windows:
-```powershell
-Get-ChildItem *_es_MX.wav | Rename-Item -NewName { $_.Name -replace '_es_MX\.wav','_es_419.wav' }
-```
-
 **Windows CSV line endings** — if the CSV was created on Windows and used on Mac/Linux, strip `\r`:
 ```bash
 sed -i 's/\r//' files.csv
 ```
 
-**Token expiry** — tokens expire after 1 hour. For large batches, use `--auto-token` to ensure a fresh token is fetched at the start of every run.
+**Token expiry** — RingCentral tokens expire after 1 hour. For large batches, use `--auto-token` to ensure a fresh token is fetched at the start of every run.
 
 ---
 
